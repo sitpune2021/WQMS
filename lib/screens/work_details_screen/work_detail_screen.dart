@@ -3,10 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
-import 'package:workqualitymonitoringsystem/screens/log_report/log_report.dart';
+import 'package:workqualitymonitoringsystem/constants/color_constants.dart';
+import 'package:workqualitymonitoringsystem/model/work_response.dart';
+import 'package:workqualitymonitoringsystem/screens/Site%20Inspection/Site%20Inspection.dart';
 
 class WorkDetailScreen extends StatefulWidget {
-  const WorkDetailScreen({super.key});
+  final WorkDetails work; // 👈 passed from list screen
+
+  const WorkDetailScreen({super.key, required this.work});
 
   @override
   State<WorkDetailScreen> createState() => _WorkDetailScreenState();
@@ -33,7 +37,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
       final response = await http.post(
         Uri.parse(url),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"work_id": 7}), // 👈 fixed key
+        body: jsonEncode({"work_id": widget.work.id}), // 👈 dynamic work id
       );
 
       debugPrint("Status Code: ${response.statusCode}");
@@ -111,7 +115,29 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                   top: height * 0.012,
                   bottom: height * 0.004,
                 ),
-                child: const Row(children: []),
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      icon: Icon(
+                        Icons.arrow_back_ios_new,
+                        size: 25,
+                        color: ColorConstants.iconColor,
+                      ),
+                    ),
+                    SizedBox(width: 15),
+                    Text(
+                      'कामाचा तपशील',
+                      style: GoogleFonts.inter(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        color: ColorConstants.apptitleColor,
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
               Expanded(
@@ -167,27 +193,32 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                                         children: [
                                           _infoRow(
                                             "वर्क आय डी :",
-                                            workDetails?["id"] ?? "-",
+                                            workDetails?["id"] ??
+                                                widget.work.id,
                                             font,
                                           ),
                                           _infoRow(
                                             "कामाचे नाव :",
-                                            workDetails?["work_name"] ?? "-",
+                                            workDetails?["work_name"] ??
+                                                widget.work.workName,
                                             font,
                                           ),
                                           _infoRow(
                                             "ठेकेदाराचे नाव :",
-                                            workDetails?["assigned_to"] ?? "-",
+                                            workDetails?["assigned_to"] ??
+                                                widget.work.assignedTo,
                                             font,
                                           ),
                                           _infoRow(
                                             "स्टार्ट डेट :",
-                                            workDetails?["start_date"] ?? "-",
+                                            workDetails?["start_date"] ??
+                                                widget.work.startDate,
                                             font,
                                           ),
                                           _infoRow(
                                             "एंड डेट :",
-                                            workDetails?["end_date"] ?? "-",
+                                            workDetails?["end_date"] ??
+                                                widget.work.endDate,
                                             font,
                                           ),
                                         ],
@@ -343,7 +374,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (_) => LogReportScreen(),
+                                          builder: (_) => SiteInspectionForm(),
                                         ),
                                       );
                                     },

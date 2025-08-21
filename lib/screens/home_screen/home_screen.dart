@@ -4,7 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workqualitymonitoringsystem/constants/color_constants.dart';
+import 'package:workqualitymonitoringsystem/model/work_response.dart';
+import 'package:workqualitymonitoringsystem/screens/log_report/log_report.dart';
 import 'package:workqualitymonitoringsystem/screens/notification_screen/notification_screen.dart';
+import 'package:workqualitymonitoringsystem/screens/work_details_screen/work_detail_screen.dart';
+import 'package:workqualitymonitoringsystem/screens/yojna_list/yojna_list.dart';
 
 enum CutoutSide { topLeft, topRight, bottomLeft, bottomRight }
 
@@ -14,8 +18,10 @@ class CurvedCard extends StatelessWidget {
   final TextAlign titleAlign;
   final Color startColor;
   final Color endColor;
+  final Color countColor;
+  final Color titleColor;
   final CutoutSide cutoutSide;
-  final bool reverseOrder;
+  final bool reverseOrder; // when true -> title above count
 
   const CurvedCard({
     super.key,
@@ -26,34 +32,34 @@ class CurvedCard extends StatelessWidget {
     required this.endColor,
     required this.cutoutSide,
     this.reverseOrder = false,
+    required this.countColor,
+    required this.titleColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> children = [
-      Text(
-        count,
-        style: const TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-        ),
+    final countWidget = Text(
+      count,
+      style: GoogleFonts.inter(
+        fontSize: 18,
+        color: countColor,
+        fontWeight: FontWeight.w600,
       ),
-      const SizedBox(height: 6),
-      Text(
-        title,
-        textAlign: titleAlign,
-        style: const TextStyle(fontSize: 12, color: Colors.black87),
-      ),
-    ];
+    );
 
-    if (!reverseOrder) {
-      children = children.reversed.toList(); // title on top
-    }
+    final titleWidget = Text(
+      title,
+      textAlign: titleAlign,
+      style: GoogleFonts.inter(
+        fontSize: 18,
+        color: titleColor,
+        fontWeight: FontWeight.w600,
+      ),
+    );
 
     return SizedBox(
-      width: 140,
-      height: 130,
+      width: 145,
+      height: 140,
       child: CustomPaint(
         painter: CardShapePainter(cutoutSide, startColor, endColor),
         child: Container(
@@ -66,7 +72,13 @@ class CurvedCard extends StatelessWidget {
                 : titleAlign == TextAlign.right
                 ? CrossAxisAlignment.end
                 : CrossAxisAlignment.center,
-            children: children,
+            children: reverseOrder
+                ? [
+                    titleWidget,
+                    const SizedBox(height: 6),
+                    countWidget,
+                  ] // title above
+                : [countWidget, const SizedBox(height: 6), titleWidget],
           ),
         ),
       ),
@@ -172,6 +184,16 @@ class _HomeScreenState extends State<HomeScreen> {
         statusBarColor: Color(0xFF002D96),
         statusBarIconBrightness: Brightness.light,
       ),
+    );
+
+    final WorkDetails work = WorkDetails(
+      id: "1",
+      yojanaName: "योजना A",
+      workName: "रस्त्याचे काम",
+      workPrice: "₹1,00,000",
+      assignedTo: "कंत्राटदार",
+      startDate: "2025-08-01",
+      endDate: "2025-08-20",
     );
 
     return Scaffold(
@@ -342,22 +364,48 @@ class _HomeScreenState extends State<HomeScreen> {
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: [
-                                        CurvedCard(
-                                          title: "व्हिसिट केलेल्या साइट",
-                                          count: "$visitedSites",
-                                          startColor: const Color(0xFFE3D7FF),
-                                          endColor: const Color(0xFFBFA4F9),
-                                          cutoutSide: CutoutSide.bottomRight,
-                                          titleAlign: TextAlign.left,
+                                        GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => YojnaList(),
+                                              ),
+                                            );
+                                          },
+                                          child: CurvedCard(
+                                            title: "व्हिसिट केलेल्या \nसाइट",
+                                            count: "$visitedSites",
+                                            startColor: const Color(0xFFE3D7FF),
+                                            endColor: const Color(0xFFBFA4F9),
+                                            cutoutSide: CutoutSide.bottomRight,
+                                            titleAlign: TextAlign.left,
+                                            countColor: const Color(0xFF3800B9),
+                                            titleColor: const Color(0xFF3800B9),
+                                            reverseOrder: true, // title above
+                                          ),
                                         ),
                                         const SizedBox(width: 10),
-                                        CurvedCard(
-                                          title: "पेंडिंग साइट",
-                                          count: "$pendingSites",
-                                          startColor: const Color(0xFFE6F0FF),
-                                          endColor: const Color(0xFFBBD6FF),
-                                          cutoutSide: CutoutSide.bottomLeft,
-                                          titleAlign: TextAlign.right,
+                                        GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => YojnaList(),
+                                              ),
+                                            );
+                                          },
+                                          child: CurvedCard(
+                                            title: "पेंडिंग साइट",
+                                            count: "$pendingSites",
+                                            startColor: const Color(0xFFE6F0FF),
+                                            endColor: const Color(0xFFBBD6FF),
+                                            cutoutSide: CutoutSide.bottomLeft,
+                                            titleAlign: TextAlign.right,
+                                            countColor: const Color(0xFF0B4890),
+                                            titleColor: const Color(0xFF0B4890),
+                                            reverseOrder: true, // title above
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -367,36 +415,60 @@ class _HomeScreenState extends State<HomeScreen> {
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: [
-                                        CurvedCard(
-                                          title: "विलंबित कामे",
-                                          count: "$delayedWorks",
-                                          startColor: const Color(0xFFFFF3D6),
-                                          endColor: const Color(0xFFFFD280),
-                                          cutoutSide: CutoutSide.topRight,
-                                          titleAlign: TextAlign.left,
-                                          reverseOrder: true,
+                                        GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => YojnaList(),
+                                              ),
+                                            );
+                                          },
+                                          child: CurvedCard(
+                                            title: "विलंबित कामे",
+                                            count: "$delayedWorks",
+                                            startColor: const Color(0xFFFFF3D6),
+                                            endColor: const Color(0xFFFFD280),
+                                            cutoutSide: CutoutSide.topRight,
+                                            titleAlign: TextAlign.left,
+                                            reverseOrder: false, // title below
+                                            countColor: const Color(0xFFFF3830),
+                                            titleColor: const Color(0xFFFF3830),
+                                          ),
                                         ),
                                         const SizedBox(width: 10),
-                                        CurvedCard(
-                                          title: "रिजेक्टेड साइट",
-                                          count: "$rejectedSites",
-                                          startColor: const Color(0xFFFFD6D6),
-                                          endColor: const Color(0xFFFF9E9E),
-                                          cutoutSide: CutoutSide.topLeft,
-                                          titleAlign: TextAlign.right,
-                                          reverseOrder: true,
+                                        GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => YojnaList(),
+                                              ),
+                                            );
+                                          },
+                                          child: CurvedCard(
+                                            title: "रिजेक्टेड साइट",
+                                            count: "$rejectedSites",
+                                            startColor: const Color(0xFFFFD6D6),
+                                            endColor: const Color(0xFFFF9E9E),
+                                            cutoutSide: CutoutSide.topLeft,
+                                            titleAlign: TextAlign.right,
+                                            reverseOrder: false, // title below
+                                            countColor: const Color(0xFFCA160E),
+                                            titleColor: const Color(0xFFCA160E),
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ],
                                 ),
-                                // Center Circle with Gradient
+                                // Center Circle
                                 GestureDetector(
                                   onTap: () =>
                                       _updateCompleted(completedProjects + 1),
                                   child: Container(
-                                    width: 140,
-                                    height: 140,
+                                    width: 135,
+                                    height: 135,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       gradient: const LinearGradient(
@@ -417,12 +489,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
-                                          Text(
-                                            "$completedProjects",
-                                            style: const TextStyle(
-                                              fontSize: 26,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black87,
+                                          CircleAvatar(
+                                            backgroundColor: const Color(
+                                              0xFFFD5FCE6,
+                                            ),
+                                            radius: 25,
+                                            child: Text(
+                                              "$completedProjects",
+                                              style: GoogleFonts.inter(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                                color: const Color(0xFFF006C2E),
+                                              ),
                                             ),
                                           ),
                                           const SizedBox(height: 6),
@@ -430,7 +508,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                             "पूर्ण झालेले \nप्रकल्प",
                                             textAlign: TextAlign.center,
                                             style: GoogleFonts.inter(
-                                              fontSize: 14,
+                                              fontSize: 16,
+                                              color: const Color(0xFFF006C2E),
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),

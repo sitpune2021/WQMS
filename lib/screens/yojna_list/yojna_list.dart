@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:workqualitymonitoringsystem/model/work_response.dart';
-import 'package:workqualitymonitoringsystem/screens/logView_Screen/logview_screen.dart';
+import 'package:workqualitymonitoringsystem/screens/work_details_screen/work_detail_screen.dart';
 
 class YojnaList extends StatefulWidget {
   const YojnaList({super.key});
@@ -19,6 +19,7 @@ class _YojnaListState extends State<YojnaList> {
 
   List<WorkDetails> _workList = [];
   bool _isLoading = true;
+  List<WorkDetails> _filteredList = [];
 
   @override
   void initState() {
@@ -48,6 +49,7 @@ class _YojnaListState extends State<YojnaList> {
 
         setState(() {
           _workList = workResponse.details;
+          _filteredList = _workList;
           _isLoading = false;
         });
       } else {
@@ -67,6 +69,15 @@ class _YojnaListState extends State<YojnaList> {
   void dispose() {
     _focusNode.dispose();
     super.dispose();
+  }
+
+  void _filterList(String query) {
+    setState(() {
+      _filteredList = _workList.where((work) {
+        return work.yojanaName.toLowerCase().contains(query.toLowerCase()) ||
+            work.workName.toLowerCase().contains(query.toLowerCase());
+      }).toList();
+    });
   }
 
   @override
@@ -116,23 +127,24 @@ class _YojnaListState extends State<YojnaList> {
                         padding: EdgeInsets.symmetric(horizontal: width * 0.04),
                         child: _isLoading
                             ? const Center(child: CircularProgressIndicator())
-                            : _workList.isEmpty
+                            : _filteredList.isEmpty
                             ? const Center(
                                 child: Text(
-                                  "No work found",
+                                  "कोणतेही काम आढळले नाही ⚠️",
                                   style: TextStyle(fontSize: 16),
                                 ),
                               )
                             : ListView.builder(
-                                itemCount: _workList.length,
+                                itemCount: _filteredList.length,
                                 itemBuilder: (context, index) {
-                                  final work = _workList[index];
+                                  final work = _filteredList[index];
                                   return GestureDetector(
                                     onTap: () {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (_) => const LogViewScreen(),
+                                          builder: (_) =>
+                                              WorkDetailScreen(work: work),
                                         ),
                                       );
                                     },
@@ -219,9 +231,7 @@ class _YojnaListState extends State<YojnaList> {
                                   fontSize: width * 0.04,
                                   color: Colors.black87,
                                 ),
-                                onChanged: (value) {
-                                  // 🔍 Optional: implement search filter here
-                                },
+                                onChanged: _filterList,
                               ),
                             ),
                           ],

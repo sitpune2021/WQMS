@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workqualitymonitoringsystem/constants/color_constants.dart';
 import 'package:workqualitymonitoringsystem/screens/Login_screen/login_screen.dart';
 import 'package:workqualitymonitoringsystem/screens/Site%20Inspection/Site%20Inspection.dart';
+import 'package:workqualitymonitoringsystem/screens/report_screen/report_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -124,7 +125,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 () => Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => SiteInspectionForm(),
+                                    builder: (_) => ReportScreen(),
                                   ),
                                 ),
                                 width,

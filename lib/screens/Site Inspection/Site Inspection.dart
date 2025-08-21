@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:workqualitymonitoringsystem/constants/color_constants.dart';
+import 'package:workqualitymonitoringsystem/screens/report_screen/report_screen.dart';
 
 class SiteInspectionForm extends StatefulWidget {
   const SiteInspectionForm({super.key});
@@ -51,6 +52,10 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
       };
 
       debugPrint("Submitted Data: $requestData");
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ReportScreen()),
+      );
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("जतन केले")));

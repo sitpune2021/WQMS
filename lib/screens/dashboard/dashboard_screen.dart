@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:remixicon/remixicon.dart';
 import 'package:workqualitymonitoringsystem/constants/color_constants.dart';
 import 'package:workqualitymonitoringsystem/screens/home_screen/home_screen.dart';
+import 'package:workqualitymonitoringsystem/screens/log_report/log_report.dart';
 import 'package:workqualitymonitoringsystem/screens/profile_screen/profile_screen.dart';
-import 'package:workqualitymonitoringsystem/screens/work_details_screen/work_detail_screen.dart';
 import 'package:workqualitymonitoringsystem/screens/yojna_list/yojna_list.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -21,7 +22,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   final List<Widget> _screens = [
     const HomeScreen(),
-    const WorkDetailScreen(),
+    const LogReportScreen(),
     const ProfileScreen(),
   ];
 
@@ -69,9 +70,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             tabBackgroundColor: ColorConstants.statubarColor.withOpacity(0.1),
             color: Colors.grey,
             tabs: const [
-              GButton(icon: Icons.home, text: 'Home'),
-              GButton(icon: Icons.add_box, text: 'Form'),
-              GButton(icon: Icons.person, text: 'Profile'),
+              GButton(icon: Icons.home),
+              GButton(icon: RemixIcons.file_chart_2_line),
+              GButton(icon: RemixIcons.user_3_line),
             ],
             selectedIndex: _currentIndex,
             onTabChange: (index) {

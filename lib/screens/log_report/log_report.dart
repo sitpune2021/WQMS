@@ -58,25 +58,28 @@ class _LogReportScreenState extends State<LogReportScreen> {
         child: Column(
           children: [
             SizedBox(height: height * 0.06),
-            Row(
-              children: [
-                IconButton(
-                  icon: Icon(
-                    Icons.arrow_back_ios_new,
-                    color: ColorConstants.apptitleColor,
-                    size: width * 0.055,
+            Padding(
+              padding: const EdgeInsets.only(left: 30, top: 10),
+              child: Row(
+                children: [
+                  // IconButton(
+                  //   icon: Icon(
+                  //     Icons.arrow_back_ios_new,
+                  //     color: ColorConstants.apptitleColor,
+                  //     size: width * 0.055,
+                  //   ),
+                  //   onPressed: () => Navigator.pop(context),
+                  // ),
+                  Text(
+                    ' लॉग ',
+                    style: GoogleFonts.inter(
+                      fontSize: width * 0.055,
+                      fontWeight: FontWeight.w600,
+                      color: ColorConstants.apptitleColor,
+                    ),
                   ),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                Text(
-                  ' लॉग ',
-                  style: GoogleFonts.inter(
-                    fontSize: width * 0.055,
-                    fontWeight: FontWeight.w600,
-                    color: ColorConstants.apptitleColor,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
 
             // White container with floating search bar

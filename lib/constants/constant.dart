@@ -1,5 +1,5 @@
 class Constant {
-  static const baseurl = "https://bandhkam.demosoftware.co.in";
+  static const baseurl = "https://bandhkam.demosoftware.co.in/";
   static const login = "${baseurl}do_login";
   static const talukaList = "${baseurl}taluka_list";
   static const officeType = "${baseurl}office_type_list";

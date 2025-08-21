@@ -159,7 +159,6 @@ class _ReportScreenState extends State<ReportScreen> {
                     onPressed: () => Navigator.pop(context),
                     icon: Icon(Icons.arrow_back_ios_new, size: width * 0.05),
                   ),
-
                   Text(
                     ' रिपोर्ट ',
                     style: GoogleFonts.inter(
@@ -268,37 +267,41 @@ class _ReportScreenState extends State<ReportScreen> {
                               width,
                             ),
                           ),
+                          SizedBox(height: height * 0.02),
+
+                          // ✅ EDIT BUTTON INSIDE WHITE CONTAINER
+                          SizedBox(
+                            width: double.infinity,
+                            height: height * 0.055,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: ColorConstants.buttonColor,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    width * 0.02,
+                                  ),
+                                ),
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => LogReportScreen(),
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                " एडिट ",
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  color: ColorConstants.iconColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
-                    ),
-                  ),
-                ),
-              ),
-
-              // Submit Button
-              SizedBox(height: height * 0.015),
-              SizedBox(
-                width: double.infinity,
-                height: height * 0.055,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorConstants.buttonColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(width * 0.02),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => LogReportScreen()),
-                    );
-                  },
-                  child: Text(
-                    " एडिट ",
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: ColorConstants.iconColor,
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
