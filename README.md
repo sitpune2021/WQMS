@@ -1,4 +1,4 @@
-# workqualitymonitoringsystem
+# Work Quality Monitoring System
 
 A new Flutter project.
 
