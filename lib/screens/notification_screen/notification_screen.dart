@@ -112,28 +112,28 @@ class NotificationScreen extends StatelessWidget {
                           const Spacer(),
 
                           // ✅ Submit button at bottom
-                          SizedBox(
-                            width: double.infinity,
-                            height: 48,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF34D2C0),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                elevation: 0,
-                              ),
-                              onPressed: () {},
-                              child: const Text(
-                                "सबमिट",
-                                style: TextStyle(
-                                  color: Color(0xFF002D96),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                          ),
+                          // SizedBox(
+                          //   width: double.infinity,
+                          //   height: 48,
+                          //   child: ElevatedButton(
+                          //     style: ElevatedButton.styleFrom(
+                          //       backgroundColor: const Color(0xFF34D2C0),
+                          //       shape: RoundedRectangleBorder(
+                          //         borderRadius: BorderRadius.circular(4),
+                          //       ),
+                          //       elevation: 0,
+                          //     ),
+                          //     onPressed: () {},
+                          //     child: const Text(
+                          //       "सबमिट",
+                          //       style: TextStyle(
+                          //         color: Color(0xFF002D96),
+                          //         fontSize: 16,
+                          //         fontWeight: FontWeight.w800,
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
                         ],
                       ),
                     ),

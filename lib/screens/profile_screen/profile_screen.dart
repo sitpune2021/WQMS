@@ -261,11 +261,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       borderRadius: BorderRadius.circular(width * 0.03),
                     ),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
+                    SharedPreferences preferences =
+                        await SharedPreferences.getInstance();
+                    preferences.clear();
+                    Navigator.pop(context);
                     Navigator.pushReplacement(
                       context,
                       PageTransition(
                         type: PageTransitionType.rightToLeft,
+                        duration: const Duration(milliseconds: 200),
+                        reverseDuration: const Duration(milliseconds: 200),
                         child: const LoginScreen(),
                       ),
                     );
