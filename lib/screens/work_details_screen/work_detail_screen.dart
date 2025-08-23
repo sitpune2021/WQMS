@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -40,8 +41,8 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
         body: jsonEncode({"work_id": widget.work.id}), // 👈 dynamic work id
       );
 
-      debugPrint("Status Code: ${response.statusCode}");
-      debugPrint("Response: ${response.body}");
+      log("Status Code: ${response.statusCode}");
+      log("Response: ${response.body}");
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
