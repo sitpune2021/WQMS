@@ -48,6 +48,7 @@ dependencies:
   image_picker: ^1.2.0
   permission_handler: ^12.0.1
   google_nav_bar: ^5.0.7
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
@@ -62,6 +63,11 @@ dev_dependencies:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
+flutter_icons:
+  image_path: "assets/images/logo.png"
+  android: true
+  ios: true
+  remove_alpha_ios: true
 
 # The following section is specific to Flutter packages.
 flutter:

@@ -6,10 +6,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:workqualitymonitoringsystem/constants/color_constants.dart';
 import 'package:workqualitymonitoringsystem/model/work_response.dart';
+import 'package:workqualitymonitoringsystem/model/work_type.dart';
 import 'package:workqualitymonitoringsystem/screens/Site%20Inspection/Site%20Inspection.dart';
 
 class WorkDetailScreen extends StatefulWidget {
-  final WorkDetails work; // 👈 passed from list screen
+  final WorkDetails work; // passed from list screen
 
   const WorkDetailScreen({super.key, required this.work});
 
@@ -20,16 +21,23 @@ class WorkDetailScreen extends StatefulWidget {
 class _WorkDetailScreenState extends State<WorkDetailScreen> {
   final TextEditingController reasonController = TextEditingController();
 
-  bool? isWorkOngoing = true;
-  String selectedType = "टाईप १";
+  // ⬇️ Start with nothing selected
+  bool? isWorkOngoing;
+  String? selectedType;
+
   Map<String, dynamic>? workDetails;
   bool isLoading = true;
   bool hasError = false;
+
+  // Work type API data
+  WorkType? workTypeData;
+  bool isWorkTypeLoading = true;
 
   @override
   void initState() {
     super.initState();
     fetchWorkDetails();
+    fetchWorkTypes();
   }
 
   Future<void> fetchWorkDetails() async {
@@ -38,7 +46,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
       final response = await http.post(
         Uri.parse(url),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"work_id": widget.work.id}), // 👈 dynamic work id
+        body: jsonEncode({"work_id": widget.work.id}),
       );
 
       log("Status Code: ${response.statusCode}");
@@ -69,6 +77,27 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
         isLoading = false;
         hasError = true;
       });
+    }
+  }
+
+  Future<void> fetchWorkTypes() async {
+    const url = "https://bandhkam.demosoftware.co.in/work_type_list";
+    try {
+      final response = await http.get(Uri.parse(url));
+      log("WorkType Response: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          workTypeData = WorkType.fromJson(data);
+          isWorkTypeLoading = false;
+        });
+      } else {
+        setState(() => isWorkTypeLoading = false);
+      }
+    } catch (e) {
+      debugPrint("Error fetching work types: $e");
+      setState(() => isWorkTypeLoading = false);
     }
   }
 
@@ -128,7 +157,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                         color: ColorConstants.iconColor,
                       ),
                     ),
-                    SizedBox(width: 15),
+                    const SizedBox(width: 15),
                     Text(
                       'कामाचा तपशील',
                       style: GoogleFonts.inter(
@@ -153,15 +182,16 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(18),
-                          boxShadow: [
+                          boxShadow: const [
                             BoxShadow(
                               color: Colors.black12,
                               blurRadius: 8,
-                              offset: const Offset(0, 3),
+                              offset: Offset(0, 3),
                             ),
                           ],
                         ),
                         child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
                           padding: EdgeInsets.fromLTRB(
                             width * 0.04,
                             height * 0.05,
@@ -171,7 +201,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // ✅ API Data Section
+                              // Work Details Box
                               Container(
                                 width: double.infinity,
                                 padding: const EdgeInsets.all(12),
@@ -241,8 +271,12 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                                   Radio<bool>(
                                     value: true,
                                     groupValue: isWorkOngoing,
-                                    onChanged: (v) =>
-                                        setState(() => isWorkOngoing = v),
+                                    onChanged: (v) => setState(() {
+                                      isWorkOngoing = v;
+                                      // reset work type when switching away from YES
+                                      if (isWorkOngoing != true)
+                                        selectedType = null;
+                                    }),
                                     visualDensity: VisualDensity.compact,
                                   ),
                                   Text(
@@ -253,8 +287,10 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                                   Radio<bool>(
                                     value: false,
                                     groupValue: isWorkOngoing,
-                                    onChanged: (v) =>
-                                        setState(() => isWorkOngoing = v),
+                                    onChanged: (v) => setState(() {
+                                      isWorkOngoing = v;
+                                      selectedType = null;
+                                    }),
                                     visualDensity: VisualDensity.compact,
                                   ),
                                   Text(
@@ -266,7 +302,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
 
                               SizedBox(height: height * 0.016),
 
-                              // ✅ YES Form
+                              // YES branch
                               if (isWorkOngoing == true) ...[
                                 Text(
                                   "कामाचा प्रकार",
@@ -276,56 +312,89 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                                   ),
                                 ),
                                 SizedBox(height: height * 0.008),
-                                Column(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: ["टाईप १", "टाईप २", "टाईप ३"].map((
-                                    t,
-                                  ) {
-                                    return ChoiceChip(
-                                      label: SizedBox(
-                                        width: width * 0.5,
-                                        child: Text(
-                                          t,
-                                          style: GoogleFonts.inter(
-                                            fontSize: font,
-                                          ),
-                                        ),
+
+                                isWorkTypeLoading
+                                    ? const Center(
+                                        child: CircularProgressIndicator(),
+                                      )
+                                    : Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: (workTypeData?.details ?? []).map((
+                                          e,
+                                        ) {
+                                          final isSelected =
+                                              selectedType == e.workType;
+                                          return Column(
+                                            children: [
+                                              // Full-width "chip"
+                                              SizedBox(
+                                                width: size.width * .4,
+                                                child: ChoiceChip(
+                                                  label: Center(
+                                                    child: Text(
+                                                      e.workType,
+                                                      style: GoogleFonts.inter(
+                                                        fontSize: font,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  showCheckmark: false,
+                                                  selected: isSelected,
+                                                  selectedColor:
+                                                      Colors.teal.shade200,
+                                                  backgroundColor:
+                                                      Colors.grey.shade200,
+                                                  onSelected: (sel) => setState(
+                                                    () {
+                                                      // toggle select/deselect
+                                                      if (sel) {
+                                                        selectedType =
+                                                            e.workType;
+                                                      } else if (selectedType ==
+                                                          e.workType) {
+                                                        selectedType = null;
+                                                      }
+                                                    },
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+
+                                              // Grey section appears only when this item is selected
+                                              if (isSelected) ...[
+                                                _greyBox(
+                                                  "फॉर्मेशन लेव्हल (Formation Level – कटिंग / भराव स्तर)",
+                                                  font,
+                                                ),
+                                                _greyBox(
+                                                  "सबग्रेड (Subgrade – स्तराच्या खालील थर)",
+                                                  font,
+                                                ),
+                                                _greyBox(
+                                                  "सब-बेस (Sub-base – GSB - ग्रॅन्युलर सब-बेस)",
+                                                  font,
+                                                ),
+                                                _greyBox(
+                                                  "बेस कोर्स (Base Course – WBM/WMM)",
+                                                  font,
+                                                ),
+                                                _greyBox(
+                                                  "बिटुमिनस थर (Bituminous Layer – डांबरी थर)",
+                                                  font,
+                                                ),
+                                                _greyBox("इतर", font),
+                                                const SizedBox(height: 8),
+                                              ],
+
+                                              const SizedBox(height: 6),
+                                            ],
+                                          );
+                                        }).toList(),
                                       ),
-                                      showCheckmark: false,
-                                      selected: selectedType == t,
-                                      selectedColor: Colors.teal.shade200,
-                                      backgroundColor: Colors.grey.shade200,
-                                      onSelected: (_) =>
-                                          setState(() => selectedType = t),
-                                    );
-                                  }).toList(),
-                                ),
-                                SizedBox(height: height * 0.016),
-                                _greyBox(
-                                  "फॉर्मेशन लेव्हल (Formation Level – कटिंग / भराव स्तर)",
-                                  font,
-                                ),
-                                _greyBox(
-                                  "सबग्रेड (Subgrade – स्तराच्या खालील थर)",
-                                  font,
-                                ),
-                                _greyBox(
-                                  "सब-बेस (Sub-base – GSB - ग्रॅन्युलर सब-बेस)",
-                                  font,
-                                ),
-                                _greyBox(
-                                  "बेस कोर्स (Base Course – WBM/WMM)",
-                                  font,
-                                ),
-                                _greyBox(
-                                  "बिटुमिनस थर (Bituminous Layer – डांबरी थर)",
-                                  font,
-                                ),
-                                _greyBox("इतर", font),
                               ],
 
-                              // ✅ NO Form
+                              // NO branch
                               if (isWorkOngoing == false) ...[
                                 Text(
                                   "काम सुरू न झाल्याचे कारण",
@@ -380,7 +449,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                                       );
                                     },
                                     child: Text(
-                                      "सबमिट",
+                                      "पुढे जा",
                                       style: GoogleFonts.inter(
                                         fontSize: font,
                                         fontWeight: FontWeight.w700,
