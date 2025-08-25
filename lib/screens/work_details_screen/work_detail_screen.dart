@@ -24,7 +24,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
 
   bool? isWorkOngoing;
   String? selectedType;
-
+  String? selectedWorkLayerId;
   Map<String, dynamic>? workDetails;
   bool isLoading = true;
   bool hasError = false;
@@ -150,7 +150,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
       ),
     );
 
-    final double containerTop = height * 0.04;
+    final double containerTop = height * 0.01;
     final double font = width * 0.04;
 
     return Scaffold(
@@ -173,7 +173,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                 padding: EdgeInsets.only(
                   left: width * 0.02,
                   right: width * 0.02,
-                  top: height * 0.012,
+                  top: height * 0.04,
                   bottom: height * 0.004,
                 ),
                 child: Row(
@@ -394,6 +394,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                                           });
                                         },
                                       ),
+                                SizedBox(height: size.height * .01),
 
                                 if (isWorkLayerLoading)
                                   const Center(
@@ -405,73 +406,83 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                                   Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
-                                    children: workLayerData!.details.map((
-                                      layer,
-                                    ) {
-                                      return Padding(
-                                        padding: const EdgeInsets.only(
-                                          top: 8.0,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.only(left: 5),
+                                        child: Text(
+                                          "लेयर व कामाचा प्रकार निवडा:",
+                                          style: GoogleFonts.inter(
+                                            fontSize: font,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                         ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Text(
-                                                  "लेयर नाव : ",
-                                                  style: GoogleFonts.inter(
-                                                    fontSize: font,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  layer.layer,
-                                                  style: GoogleFonts.inter(
-                                                    fontSize: font,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                              ],
+                                      ),
+                                      const SizedBox(height: 10),
+
+                                      // ✅ Changed Wrap → Column
+                                      Column(
+                                        children: workLayerData!.details.map((
+                                          layer,
+                                        ) {
+                                          final isSelected =
+                                              selectedWorkLayerId == layer.id;
+
+                                          return Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 8.0,
                                             ),
-                                            // Row(
-                                            //   children: [
-                                            //     Text(
-                                            //       "प्रगती : ",
-                                            //       style: GoogleFonts.inter(
-                                            //         fontWeight: FontWeight.w600,
-                                            //         fontSize: font * 0.9,
-                                            //       ),
-                                            //     ),
-                                            //     Text(
-                                            //       "${layer.percent} %",
-                                            //       style: GoogleFonts.inter(
-                                            //         fontSize: font * 0.9,
-                                            //       ),
-                                            //     ),
-                                            //   ],
-                                            // ),
-                                            Row(
-                                              children: [
-                                                Text(
-                                                  "कामाचा प्रकार : ",
-                                                  style: GoogleFonts.inter(
-                                                    fontWeight: FontWeight.w600,
-                                                    fontSize: font * 0.9,
-                                                  ),
+                                            child: ChoiceChip(
+                                              label: SizedBox(
+                                                width: size.width * .4,
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Text(
+                                                      "लेयर: ${layer.layer}",
+                                                      style: GoogleFonts.inter(
+                                                        fontSize: font * 0.95,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      "कामाचा प्रकार: ${layer.workType}",
+                                                      style: GoogleFonts.inter(
+                                                        fontSize: font * 0.85,
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
-                                                Text(
-                                                  layer.workType,
-                                                  style: GoogleFonts.inter(
-                                                    fontSize: font * 0.9,
-                                                  ),
-                                                ),
-                                              ],
+                                              ),
+                                              selected: isSelected,
+                                              selectedColor:
+                                                  Colors.teal.shade300,
+                                              onSelected: (selected) {
+                                                setState(() {
+                                                  selectedWorkLayerId = selected
+                                                      ? layer.id
+                                                      : null;
+                                                });
+
+                                                // ✅ Log in console
+                                                if (selected) {
+                                                  log(
+                                                    "Selected Layer => ID: ${layer.id}, लेयर: ${layer.layer}, कामाचा प्रकार: ${layer.workType}",
+                                                  );
+                                                } else {
+                                                  log(
+                                                    "Deselected Layer => ${layer.id}",
+                                                  );
+                                                }
+                                              },
                                             ),
-                                          ],
-                                        ),
-                                      );
-                                    }).toList(),
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ],
                                   ),
                               ],
 
@@ -522,13 +533,80 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                                       ),
                                     ),
                                     onPressed: () {
+                                      // 1. काम चालू आहे? (Yes/No)
+                                      if (isWorkOngoing == null) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              "कृपया काम चालू आहे का ते निवडा",
+                                            ),
+                                          ),
+                                        );
+                                        return;
+                                      }
+
+                                      // 2. If YES → validate कामाचा प्रकार (dropdown)
+                                      if (isWorkOngoing == true &&
+                                          (selectedType == null ||
+                                              selectedType!.isEmpty)) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              "कृपया कामाचा प्रकार निवडा",
+                                            ),
+                                          ),
+                                        );
+                                        return;
+                                      }
+
+                                      // 3. If YES → validate लेयर व काम प्रकार (ChoiceChip)
+                                      if (isWorkOngoing == true &&
+                                          (selectedWorkLayerId == null ||
+                                              selectedWorkLayerId!.isEmpty)) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              "कृपया लेयर व काम प्रकार निवडा",
+                                            ),
+                                          ),
+                                        );
+                                        return;
+                                      }
+
+                                      // 4. If NO → validate कारण
+                                      if (isWorkOngoing == false &&
+                                          reasonController.text
+                                              .trim()
+                                              .isEmpty) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              "कृपया कारण प्रविष्ट करा",
+                                            ),
+                                          ),
+                                        );
+                                        return;
+                                      }
+
+                                      // ✅ All validations passed → navigate
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (_) => SiteInspectionForm(),
+                                          builder: (_) => SiteInspectionForm(
+                                            workName: widget.work.workName,
+                                          ),
                                         ),
                                       );
                                     },
+
                                     child: Text(
                                       "पुढे जा",
                                       style: GoogleFonts.inter(
