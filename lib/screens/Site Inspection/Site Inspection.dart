@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:remixicon/remixicon.dart';
 import 'package:workqualitymonitoringsystem/constants/color_constants.dart';
 import 'package:workqualitymonitoringsystem/screens/report_screen/report_screen.dart';
 
@@ -64,45 +63,11 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
     }
   }
 
-  /// 🔹 Upload box widget (responsive)
-  Widget _buildUploadBox(
-    String label,
-    IconData icon,
-    VoidCallback onTap,
-    double screenWidth,
-  ) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        width: screenWidth * 0.45, // responsive width
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade400),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: Colors.grey, size: screenWidth * 0.06),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                label,
-                style: TextStyle(fontSize: screenWidth * 0.04),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     // 🔹 Responsive sizes
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth > 600; // Tablet breakpoint
 
     return Scaffold(
       body: Container(
@@ -217,107 +182,81 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
                                       ? "शेरा भरा"
                                       : null,
                                 ),
+                                // SizedBox(height: screenHeight * 0.02),
+
+                                // फोटो
+                                // Text(
+                                //   'कामाचा फोटो ',
+                                //   style: GoogleFonts.inter(
+                                //     fontSize: screenWidth * 0.035,
+                                //     fontWeight: FontWeight.w500,
+                                //   ),
+                                // ),
+                                //  SizedBox(height: screenHeight * 0.01),
+                                // InkWell(
+                                //   onTap: () {
+                                //     setState(() {
+                                //       uploadedPhoto = "photo.jpg";
+                                //     });
+                                //   },
+                                //   child: Container(
+                                //     padding: const EdgeInsets.all(14),
+                                //     decoration: BoxDecoration(
+                                //       border: Border.all(
+                                //         color: Colors.grey.shade400,
+                                //       ),
+                                //       borderRadius: BorderRadius.circular(8),
+                                //     ),
+                                //     child: Row(
+                                //       children: [
+                                //         // const Icon(
+                                //         //   RemixIcons.upload_2_line,
+                                //         //   color: Colors.grey,
+                                //         // ),
+                                //         // const SizedBox(width: 8),
+                                //         // Text("फोटो टाका"),
+                                //       ],
+                                //     ),
+                                //   ),
+                                // ),
                                 SizedBox(height: screenHeight * 0.02),
 
-                                // फोटो & व्हिडिओ side by side on big screens
-                                if (isTablet)
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'कामाचा फोटो ',
-                                              style: GoogleFonts.inter(
-                                                fontSize: screenWidth * 0.035,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                            _buildUploadBox(
-                                              "फोटो टाका",
-                                              RemixIcons.upload_2_line,
-                                              () {
-                                                setState(
-                                                  () => uploadedPhoto =
-                                                      "photo.jpg",
-                                                );
-                                              },
-                                              screenWidth,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      SizedBox(width: screenWidth * 0.04),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'कामाचा व्हिडिओ ',
-                                              style: GoogleFonts.inter(
-                                                fontSize: screenWidth * 0.035,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                            _buildUploadBox(
-                                              "व्हिडिओ टाका",
-                                              RemixIcons.upload_2_line,
-                                              () {
-                                                setState(
-                                                  () => uploadedVideo =
-                                                      "video.mp4",
-                                                );
-                                              },
-                                              screenWidth,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                else ...[
-                                  Text(
-                                    'कामाचा फोटो ',
-                                    style: GoogleFonts.inter(
-                                      fontSize: screenWidth * 0.035,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  SizedBox(height: screenHeight * 0.01),
-                                  _buildUploadBox(
-                                    "फोटो टाका",
-                                    RemixIcons.upload_2_line,
-                                    () {
-                                      setState(
-                                        () => uploadedPhoto = "photo.jpg",
-                                      );
-                                    },
-                                    screenWidth,
-                                  ),
-                                  SizedBox(height: screenHeight * 0.015),
-                                  Text(
-                                    'कामाचा व्हिडिओ ',
-                                    style: GoogleFonts.inter(
-                                      fontSize: screenWidth * 0.035,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  SizedBox(height: screenHeight * 0.01),
-                                  _buildUploadBox(
-                                    "व्हिडिओ टाका",
-                                    RemixIcons.upload_2_line,
-                                    () {
-                                      setState(
-                                        () => uploadedVideo = "video.mp4",
-                                      );
-                                    },
-                                    screenWidth,
-                                  ),
-                                ],
+                                // व्हिडिओ
+                                // Text(
+                                //   'कामाचा व्हिडिओ ',
+                                //   style: GoogleFonts.inter(
+                                //     fontSize: screenWidth * 0.035,
+                                //     fontWeight: FontWeight.w500,
+                                //   ),
+                                // ),
+                                SizedBox(height: screenHeight * 0.01),
 
+                                // InkWell(
+                                //   onTap: () {
+                                //     setState(() {
+                                //       uploadedVideo = "video.mp4";
+                                //     });
+                                //   },
+                                //   child: Container(
+                                //     padding: const EdgeInsets.all(14),
+                                //     decoration: BoxDecoration(
+                                //       border: Border.all(
+                                //         color: Colors.grey.shade400,
+                                //       ),
+                                //       borderRadius: BorderRadius.circular(8),
+                                //     ),
+                                //     child: Row(
+                                //       children: [
+                                //         const Icon(
+                                //           RemixIcons.upload_2_line,
+                                //           color: Colors.grey,
+                                //         ),
+                                //         const SizedBox(width: 8),
+                                //         Text("व्हिडिओ टाका"),
+                                //       ],
+                                //     ),
+                                //   ),
+                                // ),
                                 SizedBox(height: screenHeight * 0.03),
 
                                 // Save button
