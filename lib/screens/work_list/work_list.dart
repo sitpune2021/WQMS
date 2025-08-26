@@ -5,19 +5,21 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:workqualitymonitoringsystem/model/work_response.dart';
+import 'package:workqualitymonitoringsystem/screens/visit_list/visit_list.dart';
 import 'package:workqualitymonitoringsystem/screens/work_details_screen/work_detail_screen.dart';
 
-class YojnaList extends StatefulWidget {
-  const YojnaList({super.key});
+class WorkListId extends StatefulWidget {
+  const WorkListId({super.key});
 
   @override
-  State<YojnaList> createState() => _YojnaListState();
+  State<WorkListId> createState() => _WorkListIdState();
 }
 
-class _YojnaListState extends State<YojnaList> {
+class _WorkListIdState extends State<WorkListId> {
   final FocusNode _focusNode = FocusNode();
-  bool _isFocused = false;
+  final TextEditingController _searchController = TextEditingController();
 
+  bool _isFocused = false;
   List<WorkDetails> _workList = [];
   bool _isLoading = true;
   List<WorkDetails> _filteredList = [];
@@ -69,15 +71,27 @@ class _YojnaListState extends State<YojnaList> {
   @override
   void dispose() {
     _focusNode.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
   void _filterList(String query) {
     setState(() {
-      _filteredList = _workList.where((work) {
-        return work.yojanaName.toLowerCase().contains(query.toLowerCase()) ||
-            work.workName.toLowerCase().contains(query.toLowerCase());
-      }).toList();
+      if (query.isEmpty) {
+        _filteredList = _workList;
+      } else {
+        _filteredList = _workList.where((work) {
+          final idMatch = work.id.toString().contains(query);
+          final yojanaMatch = work.yojanaName.toLowerCase().contains(
+            query.toLowerCase(),
+          );
+          final workNameMatch = work.workName.toLowerCase().contains(
+            query.toLowerCase(),
+          );
+
+          return idMatch || yojanaMatch || workNameMatch;
+        }).toList();
+      }
     });
   }
 
@@ -143,10 +157,7 @@ class _YojnaListState extends State<YojnaList> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (_) => WorkDetailScreen(
-                                            work: work,
-                                            workData: {},
-                                          ),
+                                          builder: (_) => VisitListScreen(),
                                         ),
                                       );
                                     },
@@ -166,8 +177,15 @@ class _YojnaListState extends State<YojnaList> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
+                                            "कामाची आयडी : ${work.id}",
+                                            style: GoogleFonts.inter(
+                                              fontSize: width * 0.04,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          Text(
                                             "योजना : ${work.yojanaName}",
-                                            style: TextStyle(
+                                            style: GoogleFonts.inter(
                                               fontSize: width * 0.04,
                                               fontWeight: FontWeight.w600,
                                             ),
@@ -175,7 +193,7 @@ class _YojnaListState extends State<YojnaList> {
                                           SizedBox(height: height * 0.008),
                                           Text(
                                             "कामाचे नाव : ${work.workName}",
-                                            style: TextStyle(
+                                            style: GoogleFonts.inter(
                                               fontSize: width * 0.038,
                                               color: Colors.black87,
                                             ),
@@ -183,7 +201,7 @@ class _YojnaListState extends State<YojnaList> {
                                           SizedBox(height: height * 0.008),
                                           Text(
                                             "अनुमानित किंमत : ₹${work.workPrice}",
-                                            style: TextStyle(
+                                            style: GoogleFonts.inter(
                                               fontSize: width * 0.038,
                                               color: Colors.black54,
                                             ),
@@ -224,6 +242,7 @@ class _YojnaListState extends State<YojnaList> {
                             ),
                             Expanded(
                               child: TextField(
+                                controller: _searchController,
                                 focusNode: _focusNode,
                                 decoration: const InputDecoration(
                                   hintText: "शोधा",
@@ -236,6 +255,17 @@ class _YojnaListState extends State<YojnaList> {
                                 onChanged: _filterList,
                               ),
                             ),
+                            if (_searchController.text.isNotEmpty)
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.clear,
+                                  color: Colors.red,
+                                ),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  _filterList("");
+                                },
+                              ),
                           ],
                         ),
                       ),

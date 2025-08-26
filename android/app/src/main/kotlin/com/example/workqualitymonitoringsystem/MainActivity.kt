@@ -1,4 +1,4 @@
-package com.example.workqualitymonitoringsystem
+package com.sit.workqualitymonitoringsystem
 
 import io.flutter.embedding.android.FlutterActivity
 
