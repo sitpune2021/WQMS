@@ -1,14 +1,21 @@
+import 'dart:developer';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart'; // ✅ added
 import 'package:remixicon/remixicon.dart';
 import 'package:workqualitymonitoringsystem/constants/color_constants.dart';
-import 'package:workqualitymonitoringsystem/screens/report_screen/report_screen.dart';
 import 'package:workqualitymonitoringsystem/screens/yojna_list/yojna_list.dart';
 
 class SiteInspectionForm extends StatefulWidget {
-  final String workName; // 🔹 Passed from last screen
-
-  const SiteInspectionForm({super.key, required this.workName});
+  final String workName;
+  final Map<String, dynamic> workData;
+  const SiteInspectionForm({
+    super.key,
+    required this.workName,
+    required this.workData,
+  });
 
   @override
   State<SiteInspectionForm> createState() => _SiteInspectionFormState();
@@ -21,43 +28,177 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
   final TextEditingController _remarkController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
-  String? uploadedPhoto;
-  String? uploadedVideo;
+  List<File> selectedPhotos = [];
+  File? selectedVideo;
+  bool _isSubmitting = false;
+
+  final ImagePicker _picker = ImagePicker();
 
   /// 🔹 Submit Form
   /// 🔹 Submit Form
-  Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      if (uploadedPhoto == null || uploadedPhoto!.isEmpty) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("कृपया कामाचा फोटो टाका")));
-        return;
-      }
+  Future<void> submitForm() async {
+    if (_isSubmitting) return; // avoid double click
+    setState(() => _isSubmitting = true);
 
-      if (uploadedVideo == null || uploadedVideo!.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("कृपया कामाचा व्हिडिओ टाका")),
-        );
-        return;
-      }
+    // 🔹 Validation before API call
+    if (selectedPhotos.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("कृपया किमान १ फोटो निवडा📸")),
+      );
+      setState(() => _isSubmitting = false);
+      return;
+    }
 
-      final requestData = {
-        "workName": widget.workName,
-        "details": _detailsController.text,
-        "remark": _remarkController.text,
-        "description": _descriptionController.text,
-        "photo": uploadedPhoto,
-        "video": uploadedVideo,
-      };
+    if (selectedVideo == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("कृपया एक व्हिडिओ निवडा 🎥")),
+      );
+      setState(() => _isSubmitting = false);
+      return;
+    }
 
-      debugPrint("Submitted Data: $requestData");
+    if (_descriptionController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter description 📝")),
+      );
+      setState(() => _isSubmitting = false);
+      return;
+    }
 
-      Navigator.push(context, MaterialPageRoute(builder: (_) => YojnaList()));
-
+    if (_remarkController.text.trim().isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("जतन केले")));
+      ).showSnackBar(const SnackBar(content: Text("कृपया वर्णन भरा 🗒️")));
+      setState(() => _isSubmitting = false);
+      return;
+    }
+
+    if (widget.workData["work_type_id"] == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("कृपया कामाचा प्रकार निवडा ⚒️")),
+      );
+      setState(() => _isSubmitting = false);
+      return;
+    }
+
+    if (widget.workData["work_layer_id"] == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("कृपया कामाचा थर निवडा 🏗️")),
+      );
+      setState(() => _isSubmitting = false);
+      return;
+    }
+
+    try {
+      var uri = Uri.parse("https://bandhkam.demosoftware.co.in/add_visit");
+      var request = http.MultipartRequest("POST", uri);
+
+      // Normal fields
+      request.fields["visited_by"] = widget.workData["visited_by"].toString();
+      request.fields["work_item_id"] = widget.workData["work_item_id"]
+          .toString();
+      request.fields["is_ongoing"] = widget.workData["is_ongoing"].toString();
+      request.fields["work_type_id"] = widget.workData["work_type_id"]
+          .toString();
+      request.fields["work_layer_id"] = widget.workData["work_layer_id"]
+          .toString();
+      request.fields["description"] = _descriptionController.text.trim();
+      request.fields["remark"] = _remarkController.text.trim();
+
+      // Photos
+      for (var photo in selectedPhotos) {
+        request.files.add(
+          await http.MultipartFile.fromPath("photo[]", photo.path),
+        );
+      }
+
+      // ✅ Single Video
+      if (selectedVideo != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath("video", selectedVideo!.path),
+        );
+      }
+
+      log("📤 Sending request with fields: ${request.fields}");
+      log(
+        "📤 Sending ${selectedPhotos.length} photos & ${selectedVideo != null ? 1 : 0} video",
+      );
+
+      var response = await request.send();
+      var responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 200) {
+        log("✅ Success: $responseBody");
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("फॉर्म जतन झाला ✅"),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+
+          // ✅ Direct navigation without delay
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const YojnaList()),
+          );
+        }
+      } else {
+        log("❌ Failed [${response.statusCode}]: $responseBody");
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("फॉर्म जतन करण्यात अयशस्वी ❌"),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      log("🔥 Error: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: $e"),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  /// 🔹 Pick Photo
+  Future<void> pickPhotos() async {
+    final List<XFile>? pickedFiles = await _picker.pickMultiImage();
+    if (pickedFiles != null && pickedFiles.isNotEmpty) {
+      setState(() {
+        selectedPhotos = pickedFiles.map((x) => File(x.path)).toList();
+      });
+      log("📸 Selected Photos: ${selectedPhotos.length}");
+    }
+  }
+
+  Future<void> pickVideo() async {
+    try {
+      final XFile? video = await _picker.pickVideo(source: ImageSource.gallery);
+
+      if (video != null) {
+        setState(() {
+          selectedVideo = File(video.path);
+        });
+        log("🎥 Selected Video: ${selectedVideo!.path}");
+      } else {
+        log("⚠️ No video selected");
+      }
+    } catch (e) {
+      log("🔥 Error picking video: $e");
     }
   }
 
@@ -114,7 +255,7 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
               ),
             ),
 
-            /// 🔹 White container
+            /// 🔹 White Container
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
@@ -134,7 +275,7 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          /// 🔹 Work Name (From Last Screen)
+                          /// कामाचे नाव
                           Text(
                             "कामाचे नाव : ${widget.workName}",
                             style: TextStyle(
@@ -144,7 +285,7 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
                           ),
                           SizedBox(height: screenHeight * 0.02),
 
-                          /// 🔹 तपशील
+                          /// तपशील
                           Text(
                             'तपशील ',
                             style: GoogleFonts.inter(
@@ -165,7 +306,7 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
                           ),
                           SizedBox(height: screenHeight * 0.02),
 
-                          /// 🔹 शेरा
+                          /// शेरा
                           Text(
                             'शेरा ',
                             style: GoogleFonts.inter(
@@ -185,6 +326,8 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
                                 val == null || val.isEmpty ? "शेरा भरा" : null,
                           ),
                           SizedBox(height: screenHeight * 0.02),
+
+                          /// टिप्पणी
                           Text(
                             'टिप्पणी / निर्देश',
                             style: GoogleFonts.inter(
@@ -207,10 +350,9 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
                                 ? "टिप्पणी / निर्देश भरा"
                                 : null,
                           ),
-
                           SizedBox(height: screenHeight * 0.02),
 
-                          /// 🔹 फोटो
+                          /// फोटो
                           Text(
                             'कामाचा फोटो ',
                             style: GoogleFonts.inter(
@@ -220,11 +362,7 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
                           ),
                           SizedBox(height: screenHeight * 0.01),
                           InkWell(
-                            onTap: () {
-                              setState(() {
-                                uploadedPhoto = "photo.jpg";
-                              });
-                            },
+                            onTap: pickPhotos,
                             child: Container(
                               width: screenWidth * .45,
                               padding: const EdgeInsets.all(14),
@@ -233,20 +371,24 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
-                                children: const [
-                                  Icon(
+                                children: [
+                                  const Icon(
                                     RemixIcons.upload_2_line,
                                     color: Colors.grey,
                                   ),
-                                  SizedBox(width: 8),
-                                  Text("फोटो टाका"),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    selectedPhotos.isNotEmpty
+                                        ? "फोटो निवडला"
+                                        : "फोटो टाका",
+                                  ),
                                 ],
                               ),
                             ),
                           ),
                           SizedBox(height: screenHeight * 0.02),
 
-                          /// 🔹 व्हिडिओ
+                          /// व्हिडिओ
                           Text(
                             'कामाचा व्हिडिओ ',
                             style: GoogleFonts.inter(
@@ -256,11 +398,7 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
                           ),
                           SizedBox(height: screenHeight * 0.01),
                           InkWell(
-                            onTap: () {
-                              setState(() {
-                                uploadedVideo = "video.mp4";
-                              });
-                            },
+                            onTap: pickVideo,
                             child: Container(
                               width: screenWidth * .45,
                               padding: const EdgeInsets.all(14),
@@ -269,41 +407,49 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
-                                children: const [
-                                  Icon(
+                                children: [
+                                  const Icon(
                                     RemixIcons.upload_2_line,
                                     color: Colors.grey,
                                   ),
-                                  SizedBox(width: 8),
-                                  Text("व्हिडिओ टाका"),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    selectedVideo != null
+                                        ? "व्हिडिओ निवडला"
+                                        : "व्हिडिओ टाका",
+                                  ),
                                 ],
                               ),
                             ),
                           ),
                           SizedBox(height: screenHeight * 0.03),
 
-                          /// 🔹 Save button
+                          /// Save button
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
+                              onPressed: _isSubmitting ? null : submitForm,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: ColorConstants.buttonColor,
-                                padding: EdgeInsets.symmetric(
-                                  vertical: screenHeight * 0.02,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
+                                minimumSize: Size(double.infinity, 50),
                               ),
-                              onPressed: _submitForm,
-                              child: Text(
-                                "जतन करा",
-                                style: GoogleFonts.inter(
-                                  fontSize: screenWidth * 0.04,
-                                  fontWeight: FontWeight.w500,
-                                  color: ColorConstants.buttonTxtColor,
-                                ),
-                              ),
+                              child: _isSubmitting
+                                  ? const SizedBox(
+                                      height: 22,
+                                      width: 22,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Text(
+                                      "जतन करा",
+                                      style: GoogleFonts.inter(
+                                        fontSize: screenWidth * 0.04,
+                                        fontWeight: FontWeight.w500,
+                                        color: ColorConstants.buttonTxtColor,
+                                      ),
+                                    ),
                             ),
                           ),
                         ],

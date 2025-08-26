@@ -6,6 +6,7 @@ import 'package:workqualitymonitoringsystem/constants/color_constants.dart';
 import 'package:workqualitymonitoringsystem/screens/home_screen/home_screen.dart';
 import 'package:workqualitymonitoringsystem/screens/log_report/log_report.dart';
 import 'package:workqualitymonitoringsystem/screens/profile_screen/profile_screen.dart';
+import 'package:workqualitymonitoringsystem/screens/work_list/work_list.dart';
 import 'package:workqualitymonitoringsystem/screens/yojna_list/yojna_list.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -22,7 +23,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   final List<Widget> _screens = [
     const HomeScreen(),
-    const LogReportScreen(),
+    const WorkListId(),
     const ProfileScreen(),
   ];
 

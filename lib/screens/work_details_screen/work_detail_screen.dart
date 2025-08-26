@@ -12,8 +12,13 @@ import 'package:workqualitymonitoringsystem/screens/Site%20Inspection/Site%20Ins
 
 class WorkDetailScreen extends StatefulWidget {
   final WorkDetails work;
+  final Map<String, dynamic> workData;
 
-  const WorkDetailScreen({super.key, required this.work});
+  const WorkDetailScreen({
+    super.key,
+    required this.work,
+    required this.workData,
+  });
 
   @override
   State<WorkDetailScreen> createState() => _WorkDetailScreenState();
@@ -74,7 +79,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
         });
       }
     } catch (e) {
-      debugPrint("Error fetching work details: $e");
+      log("Error fetching work details: $e");
       setState(() {
         isLoading = false;
         hasError = true;
@@ -98,7 +103,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
         setState(() => isWorkTypeLoading = false);
       }
     } catch (e) {
-      debugPrint("Error fetching work types: $e");
+      log("Error fetching work types: $e");
       setState(() => isWorkTypeLoading = false);
     }
   }
@@ -126,7 +131,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
         setState(() => isWorkLayerLoading = false);
       }
     } catch (e) {
-      debugPrint("Error fetching work layers: $e");
+      log("Error fetching work layers: $e");
       setState(() => isWorkLayerLoading = false);
     }
   }
@@ -419,7 +424,6 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                                       ),
                                       const SizedBox(height: 10),
 
-                                      // ✅ Changed Wrap → Column
                                       Column(
                                         children: workLayerData!.details.map((
                                           layer,
@@ -466,17 +470,6 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                                                       ? layer.id
                                                       : null;
                                                 });
-
-                                                // ✅ Log in console
-                                                if (selected) {
-                                                  log(
-                                                    "Selected Layer => ID: ${layer.id}, लेयर: ${layer.layer}, कामाचा प्रकार: ${layer.workType}",
-                                                  );
-                                                } else {
-                                                  log(
-                                                    "Deselected Layer => ${layer.id}",
-                                                  );
-                                                }
                                               },
                                             ),
                                           );
@@ -596,17 +589,31 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                                         return;
                                       }
 
-                                      // ✅ All validations passed → navigate
+                                      // ✅ All validations passed → navigate & pass API data
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                           builder: (_) => SiteInspectionForm(
                                             workName: widget.work.workName,
+                                            workData: {
+                                              "visited_by": "123",
+                                              "work_item_id": widget.work.id,
+                                              // "work_item_id": widget.work.id,
+                                              "work_type_id": selectedType,
+                                              "is_ongoing":
+                                                  isWorkOngoing == true
+                                                  ? "yes"
+                                                  : "no",
+                                              "work_layer_id":
+                                                  selectedWorkLayerId,
+                                              "reason": isWorkOngoing == false
+                                                  ? reasonController.text.trim()
+                                                  : null,
+                                            },
                                           ),
                                         ),
                                       );
                                     },
-
                                     child: Text(
                                       "पुढे जा",
                                       style: GoogleFonts.inter(
