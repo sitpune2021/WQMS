@@ -148,12 +148,12 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
     final width = size.width;
     final height = size.height;
 
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Color(0xFF002D96),
-        statusBarIconBrightness: Brightness.light,
-      ),
-    );
+    // SystemChrome.setSystemUIOverlayStyle(
+    //   const SystemUiOverlayStyle(
+    //     statusBarColor: Colors.transparent,
+    //     statusBarIconBrightness: Brightness.light,
+    //   ),
+    // );
 
     final double containerTop = height * 0.01;
     final double font = width * 0.04;
