@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart'; // ✅ added
 import 'package:remixicon/remixicon.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workqualitymonitoringsystem/constants/color_constants.dart';
 import 'package:workqualitymonitoringsystem/screens/yojna_list/yojna_list.dart';
 
@@ -33,8 +34,16 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
   List<File> selectedPhotos = [];
   File? selectedVideo;
   bool _isSubmitting = false;
+  String? _userId;
 
   final ImagePicker _picker = ImagePicker();
+
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId();
+  }
 
   /// 🔹 Submit Form
   Future<void> submitForm() async {
@@ -173,6 +182,15 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  Future<void> _loadUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userId = prefs.getString('userid'); // make sure key matches your storage
+      widget.workData["visited_by"] = _userId ?? '';
+      log("🔹 Loaded userId: $_userId");
+    });
   }
 
   /// 🔹 Pick Photo

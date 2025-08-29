@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workqualitymonitoringsystem/constants/color_constants.dart';
 import 'package:workqualitymonitoringsystem/model/work_response.dart';
 import 'package:workqualitymonitoringsystem/model/work_type.dart';
@@ -57,12 +58,14 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
 
   // ---------------- API Calls ----------------
   Future<void> fetchWorkDetails() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userString = prefs.getString('userid');
     const url = "https://bandhkam.demosoftware.co.in/work_details";
     try {
       final response = await http.post(
         Uri.parse(url),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"work_id": widget.work.id}),
+        body: jsonEncode({"work_id": userString}),
       );
 
       if (!mounted) return;

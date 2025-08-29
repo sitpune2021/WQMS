@@ -1,14 +1,12 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workqualitymonitoringsystem/constants/color_constants.dart';
 import 'package:workqualitymonitoringsystem/screens/Login_screen/login_screen.dart';
-import 'package:workqualitymonitoringsystem/screens/Site%20Inspection/Site%20Inspection.dart';
 import 'package:workqualitymonitoringsystem/screens/report_screen/report_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -19,8 +17,8 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  String name = "";
-  String designation = "";
+  String? name;
+  String? designation;
   String? id;
 
   @override
@@ -32,11 +30,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadUserData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      name = prefs.getString('name') ?? "Guest";
+      name = prefs.getString('name');
       id = prefs.getString('userid');
       log("------>$id");
       log("$name");
-      designation = prefs.getString('userDesignation') ?? "Not Available";
+      designation = prefs.getString('userDesignation');
       log("$designation");
     });
   }
@@ -45,14 +43,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
-
-    // Set status bar style
-    // SystemChrome.setSystemUIOverlayStyle(
-    //   const SystemUiOverlayStyle(
-    //     statusBarColor: Colors.transparent,
-    //     statusBarIconBrightness: Brightness.light,
-    //   ),
-    // );
 
     return Scaffold(
       body: Container(
@@ -68,14 +58,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               child: Row(
                 children: [
-                  // IconButton(
-                  //   onPressed: () => Navigator.pop(context),
-                  //   icon: Icon(
-                  //     Icons.arrow_back_ios_new,
-                  //     color: ColorConstants.apptitleColor,
-                  //     size: width * 0.05,
-                  //   ),
-                  // ),
                   SizedBox(width: width * 0.025),
                   Text(
                     "प्रोफाइल",
@@ -110,17 +92,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         SizedBox(height: height * 0.08), // Avatar space
-                        Text(
-                          " नाव      :  $name",
-                          style: GoogleFonts.inter(fontSize: width * 0.04),
-                        ),
-                        SizedBox(height: height * 0.005),
-                        Text(
-                          "पदनाम   :   $designation",
-                          style: GoogleFonts.inter(fontSize: width * 0.04),
-                        ),
+                        /// Name and Designation (conditionally show)
+                        if ((name != null && name!.isNotEmpty) ||
+                            (designation != null && designation!.isNotEmpty))
+                          Column(
+                            children: [
+                              if (name != null && name!.isNotEmpty)
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      "नाव : ",
+                                      style: GoogleFonts.inter(
+                                        fontSize: width * 0.045,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    Text(
+                                      name!,
+                                      style: GoogleFonts.inter(
+                                        fontSize: width * 0.045,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              if (designation != null &&
+                                  designation!.isNotEmpty)
+                                SizedBox(height: height * 0.005),
+                              if (designation != null &&
+                                  designation!.isNotEmpty)
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      "पदनाम : ",
+                                      style: GoogleFonts.inter(
+                                        fontSize: width * 0.045,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    Text(
+                                      designation!,
+                                      style: GoogleFonts.inter(
+                                        fontSize: width * 0.045,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                            ],
+                          ),
+
                         SizedBox(height: height * 0.02),
 
                         /// Options List
@@ -258,8 +284,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 SizedBox(height: height * 0.03),
-
-                /// Logout Button
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: ColorConstants.iconColor,
@@ -292,8 +316,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 SizedBox(height: height * 0.015),
-
-                /// Cancel Button
                 OutlinedButton(
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: ColorConstants.iconColor),
