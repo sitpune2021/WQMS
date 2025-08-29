@@ -21,6 +21,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   String name = "";
   String designation = "";
+  String? id;
 
   @override
   void initState() {
@@ -32,6 +33,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       name = prefs.getString('name') ?? "Guest";
+      id = prefs.getString('userid');
+      log("------>$id");
       log("$name");
       designation = prefs.getString('userDesignation') ?? "Not Available";
       log("$designation");

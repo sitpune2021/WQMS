@@ -11,10 +11,12 @@ import 'package:workqualitymonitoringsystem/screens/yojna_list/yojna_list.dart';
 class SiteInspectionForm extends StatefulWidget {
   final String workName;
   final Map<String, dynamic> workData;
+  // final UserModel userModel;
   const SiteInspectionForm({
     super.key,
     required this.workName,
     required this.workData,
+    // required this.userModel,
   });
 
   @override
@@ -34,7 +36,6 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
 
   final ImagePicker _picker = ImagePicker();
 
-  /// 🔹 Submit Form
   /// 🔹 Submit Form
   Future<void> submitForm() async {
     if (_isSubmitting) return; // avoid double click
@@ -353,6 +354,7 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
                           SizedBox(height: screenHeight * 0.02),
 
                           /// फोटो
+                          /// फोटो
                           Text(
                             'कामाचा फोटो ',
                             style: GoogleFonts.inter(
@@ -379,13 +381,57 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
                                   const SizedBox(width: 8),
                                   Text(
                                     selectedPhotos.isNotEmpty
-                                        ? "फोटो निवडला"
+                                        ? "${selectedPhotos.length} फोटो निवडले"
                                         : "फोटो टाका",
                                   ),
                                 ],
                               ),
                             ),
                           ),
+
+                          // Display selected photos
+                          if (selectedPhotos.isNotEmpty)
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: screenHeight * 0.01,
+                              ),
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: selectedPhotos.map((file) {
+                                  return Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.file(
+                                          file,
+                                          height: 80,
+                                          width: 80,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                      Positioned(
+                                        right: -8,
+                                        top: -8,
+                                        child: IconButton(
+                                          icon: const Icon(
+                                            Icons.cancel,
+                                            color: Colors.red,
+                                            size: 20,
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              selectedPhotos.remove(file);
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+
                           SizedBox(height: screenHeight * 0.02),
 
                           /// व्हिडिओ
@@ -422,6 +468,21 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
                               ),
                             ),
                           ),
+
+                          // Show selected video file name below picker
+                          if (selectedVideo != null)
+                            Padding(
+                              padding: EdgeInsets.only(
+                                top: screenHeight * 0.008,
+                              ),
+                              child: Text(
+                                selectedVideo!.path.split('/').last,
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.035,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                            ),
                           SizedBox(height: screenHeight * 0.03),
 
                           /// Save button

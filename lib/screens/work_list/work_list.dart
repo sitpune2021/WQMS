@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:workqualitymonitoringsystem/model/user_model.dart';
 import 'package:workqualitymonitoringsystem/model/work_response.dart';
 import 'package:workqualitymonitoringsystem/screens/visit_list/visit_list.dart';
 import 'package:workqualitymonitoringsystem/screens/work_details_screen/work_detail_screen.dart';
@@ -17,13 +19,34 @@ class WorkListId extends StatefulWidget {
 }
 
 class _WorkListIdState extends State<WorkListId> {
+  UserModel? userModel;
   final FocusNode _focusNode = FocusNode();
   final TextEditingController _searchController = TextEditingController();
 
   bool _isFocused = false;
+  WorkDetails? workDetails;
   List<WorkDetails> _workList = [];
   bool _isLoading = true;
   List<WorkDetails> _filteredList = [];
+
+  // // 🔹 Load user first, then fetch work list
+  // Future<void> _loadUserAndFetchData() async {
+  //   final prefs = await SharedPreferences.getInstance();
+
+  //   final userString = prefs.getString('userid');
+  //   print("-------->${userString}");
+
+  //   if (userString != null) {
+  //     //  userModel = UserModel.fromJson(jsonDecode(userString));
+  //     print("${_fetchData()}"); // ✅ only call after userModel is loaded
+  //   } else {
+  //     // Handle case when user is not stored
+  //     log("❌ No current user found in SharedPreferences");
+  //     setState(() {
+  //       _isLoading = false;
+  //     });
+  //   }
+  // }
 
   @override
   void initState() {
@@ -34,18 +57,23 @@ class _WorkListIdState extends State<WorkListId> {
       });
     });
     _fetchData();
+    // _loadUserAndFetchData();
   }
 
   Future<void> _fetchData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userString = prefs.getString('userid');
+    print("user-------->$userString");
     try {
       final response = await http.post(
         Uri.parse("https://bandhkam.demosoftware.co.in/work_list"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"user_id": 7}),
+        body: jsonEncode({"user_id": userString}),
       );
 
       log("📡 Status Code: ${response.statusCode}");
       log("📡 Response: ${response.body}");
+      log("📡 userid----: ${userString}");
 
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
@@ -109,7 +137,13 @@ class _WorkListIdState extends State<WorkListId> {
     // );
 
     return Scaffold(
-      appBar: CustomAppBar(title: 'प्रकल्प यादी'),
+      appBar: CustomAppBar(
+        title: 'प्रकल्प यादी',
+        // icon: Icons.arrow_back_ios_new,
+        // onIconPressed: () {
+        //   Navigator.pop(context);
+        // },
+      ),
       body: Column(
         children: [
           //SizedBox(height: height * 0.06),

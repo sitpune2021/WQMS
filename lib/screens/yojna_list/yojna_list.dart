@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:workqualitymonitoringsystem/model/work_response.dart';
+import 'package:workqualitymonitoringsystem/screens/dashboard/dashboard_screen.dart';
+import 'package:workqualitymonitoringsystem/screens/home_screen/home_screen.dart';
 import 'package:workqualitymonitoringsystem/screens/work_details_screen/work_detail_screen.dart';
 
 class YojnaList extends StatefulWidget {
@@ -93,158 +95,177 @@ class _YojnaListState extends State<YojnaList> {
     //   ),
     // );
 
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFE0F7F9), Color(0xFF00B3A4)],
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) =>
+                DashboardScreen(), // <-- your full home screen
           ),
-        ),
-        child: Column(
-          children: [
-            SizedBox(height: height * 0.06),
-            Expanded(
-              child: Stack(
-                children: [
-                  // White container
-                  Padding(
-                    padding: EdgeInsets.only(
-                      top: height * 0.1,
-                      left: 10,
-                      right: 10,
-                    ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(width * 0.02),
-                          topRight: Radius.circular(width * 0.02),
-                        ),
-                      ),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: width * 0.04),
-                        child: _isLoading
-                            ? const Center(child: CircularProgressIndicator())
-                            : _filteredList.isEmpty
-                            ? const Center(
-                                child: Text(
-                                  "कोणतेही काम आढळले नाही ⚠️",
-                                  style: TextStyle(fontSize: 16),
-                                ),
-                              )
-                            : ListView.builder(
-                                itemCount: _filteredList.length,
-                                itemBuilder: (context, index) {
-                                  final work = _filteredList[index];
-                                  return GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => WorkDetailScreen(
-                                            work: work,
-                                            workData: {},
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    child: Container(
-                                      margin: EdgeInsets.only(
-                                        bottom: height * 0.015,
-                                      ),
-                                      padding: EdgeInsets.all(width * 0.03),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFF2F2F2),
-                                        borderRadius: BorderRadius.circular(
-                                          width * 0.025,
-                                        ),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            "योजना : ${work.yojanaName}",
-                                            style: TextStyle(
-                                              fontSize: width * 0.04,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          SizedBox(height: height * 0.008),
-                                          Text(
-                                            "कामाचे नाव : ${work.workName}",
-                                            style: TextStyle(
-                                              fontSize: width * 0.038,
-                                              color: Colors.black87,
-                                            ),
-                                          ),
-                                          SizedBox(height: height * 0.008),
-                                          Text(
-                                            "अनुमानित किंमत : ₹${work.workPrice}",
-                                            style: TextStyle(
-                                              fontSize: width * 0.038,
-                                              color: Colors.black54,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                      ),
-                    ),
-                  ),
-
-                  // Floating search bar
-                  Positioned(
-                    top: 38,
-                    left: 0,
-                    right: 0,
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: Container(
-                        height: height * 0.055,
-                        width: width * .94,
-                        margin: EdgeInsets.symmetric(horizontal: width * 0.03),
-                        decoration: BoxDecoration(
-                          color: _isFocused
-                              ? Colors.white
-                              : Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.teal, width: 1.5),
-                        ),
-                        child: Row(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 12),
-                              child: Icon(Icons.search, color: Colors.black54),
-                            ),
-                            Expanded(
-                              child: TextField(
-                                focusNode: _focusNode,
-                                decoration: const InputDecoration(
-                                  hintText: "शोधा",
-                                  border: InputBorder.none,
-                                ),
-                                style: TextStyle(
-                                  fontSize: width * 0.04,
-                                  color: Colors.black87,
-                                ),
-                                onChanged: _filterList,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+          (route) => false, // remove all previous routes
+        );
+        return false; // prevent default back action
+      },
+      child: Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFE0F7F9), Color(0xFF00B3A4)],
             ),
-          ],
+          ),
+          child: Column(
+            children: [
+              SizedBox(height: height * 0.06),
+              Expanded(
+                child: Stack(
+                  children: [
+                    // White container
+                    Padding(
+                      padding: EdgeInsets.only(
+                        top: height * 0.1,
+                        left: 10,
+                        right: 10,
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(width * 0.02),
+                            topRight: Radius.circular(width * 0.02),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: width * 0.04,
+                          ),
+                          child: _isLoading
+                              ? const Center(child: CircularProgressIndicator())
+                              : _filteredList.isEmpty
+                              ? const Center(
+                                  child: Text(
+                                    "कोणतेही काम आढळले नाही ⚠️",
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                )
+                              : ListView.builder(
+                                  itemCount: _filteredList.length,
+                                  itemBuilder: (context, index) {
+                                    final work = _filteredList[index];
+                                    return GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => WorkDetailScreen(
+                                              work: work,
+                                              workData: {},
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      child: Container(
+                                        margin: EdgeInsets.only(
+                                          bottom: height * 0.015,
+                                        ),
+                                        padding: EdgeInsets.all(width * 0.03),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF2F2F2),
+                                          borderRadius: BorderRadius.circular(
+                                            width * 0.025,
+                                          ),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "योजना : ${work.yojanaName}",
+                                              style: TextStyle(
+                                                fontSize: width * 0.04,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            SizedBox(height: height * 0.008),
+                                            Text(
+                                              "कामाचे नाव : ${work.workName}",
+                                              style: TextStyle(
+                                                fontSize: width * 0.038,
+                                                color: Colors.black87,
+                                              ),
+                                            ),
+                                            SizedBox(height: height * 0.008),
+                                            Text(
+                                              "अनुमानित किंमत : ₹${work.workPrice}",
+                                              style: TextStyle(
+                                                fontSize: width * 0.038,
+                                                color: Colors.black54,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                        ),
+                      ),
+                    ),
+
+                    // Floating search bar
+                    Positioned(
+                      top: 38,
+                      left: 0,
+                      right: 0,
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: Container(
+                          height: height * 0.055,
+                          width: width * .94,
+                          margin: EdgeInsets.symmetric(
+                            horizontal: width * 0.03,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _isFocused
+                                ? Colors.white
+                                : Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.teal, width: 1.5),
+                          ),
+                          child: Row(
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 12),
+                                child: Icon(
+                                  Icons.search,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                              Expanded(
+                                child: TextField(
+                                  focusNode: _focusNode,
+                                  decoration: const InputDecoration(
+                                    hintText: "शोधा",
+                                    border: InputBorder.none,
+                                  ),
+                                  style: TextStyle(
+                                    fontSize: width * 0.04,
+                                    color: Colors.black87,
+                                  ),
+                                  onChanged: _filterList,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -1,14 +1,16 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:workqualitymonitoringsystem/constants/color_constants.dart';
 import 'package:workqualitymonitoringsystem/model/work_response.dart';
 import 'package:workqualitymonitoringsystem/model/work_type.dart';
 import 'package:workqualitymonitoringsystem/model/work_layer.dart';
 import 'package:workqualitymonitoringsystem/screens/Site%20Inspection/Site%20Inspection.dart';
+import 'package:workqualitymonitoringsystem/screens/dashboard/dashboard_screen.dart';
 
 class WorkDetailScreen extends StatefulWidget {
   final WorkDetails work;
@@ -28,8 +30,8 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
   final TextEditingController reasonController = TextEditingController();
 
   bool? isWorkOngoing;
-  String? selectedType;
-  String? selectedWorkLayerId;
+  String? selectedType; // work_type_id
+  String? selectedWorkLayerId; // work_layer_id
   Map<String, dynamic>? workDetails;
   bool isLoading = true;
   bool hasError = false;
@@ -40,6 +42,12 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
   WorkLayerResponse? workLayerData;
   bool isWorkLayerLoading = false;
 
+  // Photo & video state
+  List<File> _photos = [];
+  File? _video;
+
+  final picker = ImagePicker();
+
   @override
   void initState() {
     super.initState();
@@ -47,6 +55,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
     fetchWorkTypes();
   }
 
+  // ---------------- API Calls ----------------
   Future<void> fetchWorkDetails() async {
     const url = "https://bandhkam.demosoftware.co.in/work_details";
     try {
@@ -56,8 +65,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
         body: jsonEncode({"work_id": widget.work.id}),
       );
 
-      log("Status Code: ${response.statusCode}");
-      log("Response: ${response.body}");
+      if (!mounted) return;
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -80,6 +88,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
       }
     } catch (e) {
       log("Error fetching work details: $e");
+      if (!mounted) return;
       setState(() {
         isLoading = false;
         hasError = true;
@@ -91,8 +100,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
     const url = "https://bandhkam.demosoftware.co.in/work_type_list";
     try {
       final response = await http.get(Uri.parse(url));
-      log("WorkType Response: ${response.body}");
-
+      if (!mounted) return;
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
@@ -104,6 +112,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
       }
     } catch (e) {
       log("Error fetching work types: $e");
+      if (!mounted) return;
       setState(() => isWorkTypeLoading = false);
     }
   }
@@ -118,21 +127,41 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
         body: jsonEncode({"work_type_id": workTypeId}),
       );
 
-      log("Layer API Status: ${response.statusCode}");
-      log("Layer API Response: ${response.body}");
+      if (!mounted) return;
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
           workLayerData = WorkLayerResponse.fromJson(data);
           isWorkLayerLoading = false;
+          selectedWorkLayerId = null; // reset layer selection
         });
       } else {
         setState(() => isWorkLayerLoading = false);
       }
     } catch (e) {
       log("Error fetching work layers: $e");
+      if (!mounted) return;
       setState(() => isWorkLayerLoading = false);
+    }
+  }
+
+  // ---------------- Pickers ----------------
+  Future<void> pickImages() async {
+    final picked = await picker.pickMultiImage();
+    if (picked.isNotEmpty) {
+      setState(() {
+        _photos = picked.map((e) => File(e.path)).toList();
+      });
+    }
+  }
+
+  Future<void> pickVideo() async {
+    final picked = await picker.pickVideo(source: ImageSource.gallery);
+    if (picked != null) {
+      setState(() {
+        _video = File(picked.path);
+      });
     }
   }
 
@@ -147,13 +176,6 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
     final size = MediaQuery.of(context).size;
     final width = size.width;
     final height = size.height;
-
-    // SystemChrome.setSystemUIOverlayStyle(
-    //   const SystemUiOverlayStyle(
-    //     statusBarColor: Colors.transparent,
-    //     statusBarIconBrightness: Brightness.light,
-    //   ),
-    // );
 
     final double containerTop = height * 0.01;
     final double font = width * 0.04;
@@ -308,8 +330,9 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                                     groupValue: isWorkOngoing,
                                     onChanged: (v) => setState(() {
                                       isWorkOngoing = v;
-                                      if (isWorkOngoing != true) {
+                                      if (isWorkOngoing == false) {
                                         selectedType = null;
+                                        selectedWorkLayerId = null;
                                         workLayerData = null;
                                       }
                                     }),
@@ -325,6 +348,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                                     onChanged: (v) => setState(() {
                                       isWorkOngoing = v;
                                       selectedType = null;
+                                      selectedWorkLayerId = null;
                                       workLayerData = null;
                                     }),
                                   ),
@@ -347,67 +371,84 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                                   ),
                                 ),
                                 SizedBox(height: height * 0.008),
-
-                                isWorkTypeLoading
-                                    ? const Center(
-                                        child: CircularProgressIndicator(),
-                                      )
-                                    : DropdownButtonFormField<String>(
-                                        value: selectedType,
-                                        isExpanded: true,
-                                        decoration: InputDecoration(
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
+                                if (isWorkTypeLoading)
+                                  const Center(
+                                    child: CircularProgressIndicator(),
+                                  )
+                                else if ((workTypeData?.details ?? []).isEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8.0,
+                                    ),
+                                    child: Text(
+                                      "कामाचा प्रकार उपलब्ध नाही",
+                                      style: GoogleFonts.inter(fontSize: font),
+                                    ),
+                                  )
+                                else
+                                  DropdownButtonFormField<String>(
+                                    value:
+                                        selectedType, // <-- nothing selected by default
+                                    isExpanded: true,
+                                    decoration: InputDecoration(
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 8,
+                                          ),
+                                      filled: true,
+                                      fillColor: Colors.grey.shade200,
+                                    ),
+                                    hint: Text(
+                                      "कामाचा प्रकार निवडा",
+                                      style: GoogleFonts.inter(fontSize: font),
+                                    ),
+                                    items: (workTypeData?.details ?? [])
+                                        .map(
+                                          (e) => DropdownMenuItem<String>(
+                                            value: e.id.toString(),
+                                            child: Text(
+                                              e.workType,
+                                              style: GoogleFonts.inter(
+                                                fontSize: font,
+                                              ),
                                             ),
                                           ),
-                                          contentPadding:
-                                              const EdgeInsets.symmetric(
-                                                horizontal: 12,
-                                                vertical: 8,
-                                              ),
-                                          filled: true,
-                                          fillColor: Colors.grey.shade200,
-                                        ),
-                                        hint: Text(
-                                          "कामाचा प्रकार निवडा",
-                                          style: GoogleFonts.inter(
-                                            fontSize: font,
-                                          ),
-                                        ),
-                                        items: (workTypeData?.details ?? [])
-                                            .map((e) {
-                                              return DropdownMenuItem<String>(
-                                                value: e.id.toString(),
-                                                child: Text(
-                                                  e.workType,
-                                                  style: GoogleFonts.inter(
-                                                    fontSize: font,
-                                                  ),
-                                                ),
-                                              );
-                                            })
-                                            .toList(),
-                                        onChanged: (value) {
-                                          setState(() {
-                                            selectedType = value;
-                                            if (value != null) {
-                                              fetchWorkLayers(value);
-                                            } else {
-                                              workLayerData = null;
-                                            }
-                                          });
-                                        },
-                                      ),
+                                        )
+                                        .toList(),
+                                    onChanged: (value) {
+                                      setState(() {
+                                        selectedType = value;
+                                        selectedWorkLayerId = null;
+                                        workLayerData = null;
+                                      });
+                                      if (value != null) fetchWorkLayers(value);
+                                    },
+                                  ),
+
                                 SizedBox(height: size.height * .01),
 
                                 if (isWorkLayerLoading)
                                   const Center(
                                     child: CircularProgressIndicator(),
-                                  ),
-
-                                if (!isWorkLayerLoading &&
-                                    workLayerData != null)
+                                  )
+                                else if (workLayerData == null)
+                                  const SizedBox.shrink()
+                                else if ((workLayerData!.details).isEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 5,
+                                      bottom: 10,
+                                    ),
+                                    child: Text(
+                                      "लेयर्स उपलब्ध नाहीत",
+                                      style: GoogleFonts.inter(fontSize: font),
+                                    ),
+                                  )
+                                else
                                   Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -423,21 +464,19 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                                         ),
                                       ),
                                       const SizedBox(height: 10),
-
                                       Column(
                                         children: workLayerData!.details.map((
                                           layer,
                                         ) {
                                           final isSelected =
                                               selectedWorkLayerId == layer.id;
-
                                           return Padding(
                                             padding: const EdgeInsets.only(
                                               bottom: 8.0,
                                             ),
                                             child: ChoiceChip(
                                               label: SizedBox(
-                                                width: size.width * .4,
+                                                width: size.width * .7,
                                                 child: Column(
                                                   crossAxisAlignment:
                                                       CrossAxisAlignment.start,
@@ -501,126 +540,34 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                                     fillColor: const Color(0xFFF2F2F2),
                                   ),
                                 ),
-                                SizedBox(height: height * 0.016),
-                                _uploadBox("कामाचा फोटो", "फोटो टाका", font),
-                                _uploadBox(
-                                  "कामाचा व्हिडिओ",
-                                  "व्हिडिओ टाका",
-                                  font,
-                                ),
+                                const SizedBox(height: 12),
+                                _mediaPickers(font),
                               ],
 
                               SizedBox(height: height * 0.02),
-                              Center(
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.teal,
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: height * 0.016,
-                                        horizontal: width * 0.2,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
+                              // ---------------- Button ----------------
+                              SizedBox(
+                                width: double.infinity, // full width button
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.teal,
+                                    padding: EdgeInsets.symmetric(
+                                      vertical:
+                                          height * 0.016, // vertical padding
                                     ),
-                                    onPressed: () {
-                                      // 1. काम चालू आहे? (Yes/No)
-                                      if (isWorkOngoing == null) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              "कृपया काम चालू आहे का ते निवडा",
-                                            ),
-                                          ),
-                                        );
-                                        return;
-                                      }
-
-                                      // 2. If YES → validate कामाचा प्रकार (dropdown)
-                                      if (isWorkOngoing == true &&
-                                          (selectedType == null ||
-                                              selectedType!.isEmpty)) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              "कृपया कामाचा प्रकार निवडा",
-                                            ),
-                                          ),
-                                        );
-                                        return;
-                                      }
-
-                                      // 3. If YES → validate लेयर व काम प्रकार (ChoiceChip)
-                                      if (isWorkOngoing == true &&
-                                          (selectedWorkLayerId == null ||
-                                              selectedWorkLayerId!.isEmpty)) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              "कृपया लेयर व काम प्रकार निवडा",
-                                            ),
-                                          ),
-                                        );
-                                        return;
-                                      }
-
-                                      // 4. If NO → validate कारण
-                                      if (isWorkOngoing == false &&
-                                          reasonController.text
-                                              .trim()
-                                              .isEmpty) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              "कृपया कारण प्रविष्ट करा",
-                                            ),
-                                          ),
-                                        );
-                                        return;
-                                      }
-
-                                      // ✅ All validations passed → navigate & pass API data
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => SiteInspectionForm(
-                                            workName: widget.work.workName,
-                                            workData: {
-                                              "visited_by": "123",
-                                              "work_item_id": widget.work.id,
-                                              // "work_item_id": widget.work.id,
-                                              "work_type_id": selectedType,
-                                              "is_ongoing":
-                                                  isWorkOngoing == true
-                                                  ? "yes"
-                                                  : "no",
-                                              "work_layer_id":
-                                                  selectedWorkLayerId,
-                                              "reason": isWorkOngoing == false
-                                                  ? reasonController.text.trim()
-                                                  : null,
-                                            },
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    child: Text(
-                                      "पुढे जा",
-                                      style: GoogleFonts.inter(
-                                        fontSize: font,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.white,
-                                      ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  onPressed: _submitForm,
+                                  child: Text(
+                                    isWorkOngoing == true
+                                        ? "पुढे जा" // YES selected
+                                        : "जतन करा", // NO selected or not selected yet
+                                    style: GoogleFonts.inter(
+                                      fontSize: font,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
                                     ),
                                   ),
                                 ),
@@ -638,6 +585,11 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
         ),
       ),
     );
+  }
+
+  // ---------------- Helpers ----------------
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   Widget _infoRow(String label, String value, double font) {
@@ -662,33 +614,191 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
     );
   }
 
-  Widget _uploadBox(String title, String buttonText, double font) {
+  Widget _mediaPickers(double font) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          title,
-          style: GoogleFonts.inter(fontSize: font, fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(height: 6),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade400),
-            borderRadius: BorderRadius.circular(8),
-            color: Colors.white,
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.upload, color: Colors.black54),
-              const SizedBox(width: 8),
-              Text(buttonText, style: GoogleFonts.inter(fontSize: font)),
-            ],
+          'कामाचा फोटो',
+          style: GoogleFonts.inter(
+            fontSize: screenWidth * 0.035,
+            fontWeight: FontWeight.w500,
           ),
         ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: pickImages,
+          child: Container(
+            width: screenWidth * .45,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade400),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.upload_file, color: Colors.grey),
+                const SizedBox(width: 8),
+                Text(
+                  _photos.isNotEmpty
+                      ? "${_photos.length} फोटो निवडले"
+                      : "फोटो टाका",
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (_photos.isNotEmpty)
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _photos.map((file) {
+              return Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(
+                      file,
+                      height: 80,
+                      width: 80,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Positioned(
+                    right: -8,
+                    top: -8,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.cancel,
+                        color: Colors.red,
+                        size: 20,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _photos.remove(file);
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
+        const SizedBox(height: 16),
+        Text(
+          'कामाचा व्हिडिओ',
+          style: GoogleFonts.inter(
+            fontSize: screenWidth * 0.035,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: pickVideo,
+          child: Container(
+            width: screenWidth * .45,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade400),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.upload_file, color: Colors.grey),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _video != null ? "व्हिडिओ निवडला" : "व्हिडिओ टाका",
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_video != null)
+          Text(
+            "Selected: ${_video!.path.split('/').last}",
+            style: TextStyle(
+              fontSize: screenWidth * 0.03,
+              color: Colors.grey[700],
+            ),
+          ),
       ],
     );
+  }
+
+  void _submitForm() {
+    if (isWorkOngoing == null) {
+      _showSnack("कृपया काम चालू आहे का ते निवडा");
+      return;
+    }
+
+    final Map<String, dynamic> formData = {
+      "visited_by": "123", // TODO: dynamic
+      "work_item_id": widget.work.id,
+      "is_ongoing": isWorkOngoing == true ? "yes" : "no",
+      "description": reasonController.text.trim(),
+      "remark": reasonController.text.trim(),
+    };
+
+    if (isWorkOngoing == true) {
+      // --- YES branch ---
+      if (selectedType == null || selectedType!.isEmpty) {
+        _showSnack("कृपया कामाचा प्रकार निवडा");
+        return;
+      }
+      if (selectedWorkLayerId == null || selectedWorkLayerId!.isEmpty) {
+        _showSnack("कृपया लेयर व काम प्रकार निवडा");
+        return;
+      }
+
+      formData["work_type_id"] = selectedType;
+      formData["work_layer_id"] = selectedWorkLayerId;
+
+      // Navigate to SiteInspectionForm
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => SiteInspectionForm(
+            workName: widget.work.workName,
+            workData: formData,
+          ),
+        ),
+      );
+    } else {
+      // --- NO branch ---
+      if (reasonController.text.trim().isEmpty) {
+        _showSnack("कृपया कारण प्रविष्ट करा");
+        return;
+      }
+
+      // **Photo & video validation**
+      if (_photos.isEmpty && _video == null) {
+        _showSnack("कृपया किमान एक फोटो किंवा व्हिडिओ अपलोड करा");
+        return;
+      }
+
+      formData["photo"] = _photos.map((f) => f.path).toList();
+      formData["video"] = _video?.path ?? "";
+
+      // Navigate to Dashboard
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => DashboardScreen()),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("फॉर्म जतन झाला ✅"),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+
+    log("Form Data: $formData");
   }
 }

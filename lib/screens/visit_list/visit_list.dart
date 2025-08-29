@@ -105,7 +105,13 @@ class _VisitListScreenState extends State<VisitListScreen> {
     // );
 
     return Scaffold(
-      appBar: CustomAppBar(title: 'पहाणी यादी'),
+      appBar: CustomAppBar(
+        title: 'पहाणी यादी',
+        icon: Icons.arrow_back_ios_new,
+        onIconPressed: () {
+          Navigator.pop(context);
+        },
+      ),
       // appBar: AppBar(
       //   iconTheme: const IconThemeData(color: Colors.white),
       //   title: Text(
@@ -123,7 +129,7 @@ class _VisitListScreenState extends State<VisitListScreen> {
               controller: _searchController,
               focusNode: _focusNode,
               decoration: InputDecoration(
-                hintText: "Search by work name or ID",
+                hintText: "कामाचे नाव किंवा आयडी शोधा",
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
