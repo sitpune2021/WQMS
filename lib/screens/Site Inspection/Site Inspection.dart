@@ -5,16 +5,19 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart'; // ✅ added
 import 'package:remixicon/remixicon.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workqualitymonitoringsystem/constants/color_constants.dart';
 import 'package:workqualitymonitoringsystem/screens/yojna_list/yojna_list.dart';
 
 class SiteInspectionForm extends StatefulWidget {
   final String workName;
   final Map<String, dynamic> workData;
+  // final UserModel userModel;
   const SiteInspectionForm({
     super.key,
     required this.workName,
     required this.workData,
+    // required this.userModel,
   });
 
   @override
@@ -31,10 +34,17 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
   List<File> selectedPhotos = [];
   File? selectedVideo;
   bool _isSubmitting = false;
+  String? _userId;
 
   final ImagePicker _picker = ImagePicker();
 
-  /// 🔹 Submit Form
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId();
+  }
+
   /// 🔹 Submit Form
   Future<void> submitForm() async {
     if (_isSubmitting) return; // avoid double click
@@ -172,6 +182,15 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  Future<void> _loadUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userId = prefs.getString('userid'); // make sure key matches your storage
+      widget.workData["visited_by"] = _userId ?? '';
+      log("🔹 Loaded userId: $_userId");
+    });
   }
 
   /// 🔹 Pick Photo
@@ -353,6 +372,7 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
                           SizedBox(height: screenHeight * 0.02),
 
                           /// फोटो
+                          /// फोटो
                           Text(
                             'कामाचा फोटो ',
                             style: GoogleFonts.inter(
@@ -379,13 +399,57 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
                                   const SizedBox(width: 8),
                                   Text(
                                     selectedPhotos.isNotEmpty
-                                        ? "फोटो निवडला"
+                                        ? "${selectedPhotos.length} फोटो निवडले"
                                         : "फोटो टाका",
                                   ),
                                 ],
                               ),
                             ),
                           ),
+
+                          // Display selected photos
+                          if (selectedPhotos.isNotEmpty)
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: screenHeight * 0.01,
+                              ),
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: selectedPhotos.map((file) {
+                                  return Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.file(
+                                          file,
+                                          height: 80,
+                                          width: 80,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                      Positioned(
+                                        right: -8,
+                                        top: -8,
+                                        child: IconButton(
+                                          icon: const Icon(
+                                            Icons.cancel,
+                                            color: Colors.red,
+                                            size: 20,
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              selectedPhotos.remove(file);
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+
                           SizedBox(height: screenHeight * 0.02),
 
                           /// व्हिडिओ
@@ -422,6 +486,21 @@ class _SiteInspectionFormState extends State<SiteInspectionForm> {
                               ),
                             ),
                           ),
+
+                          // Show selected video file name below picker
+                          if (selectedVideo != null)
+                            Padding(
+                              padding: EdgeInsets.only(
+                                top: screenHeight * 0.008,
+                              ),
+                              child: Text(
+                                selectedVideo!.path.split('/').last,
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.035,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                            ),
                           SizedBox(height: screenHeight * 0.03),
 
                           /// Save button

@@ -161,8 +161,8 @@ class _HomeScreenState extends State<HomeScreen> {
   int pendingSites = 1;
   int delayedWorks = 1;
   int rejectedSites = 0;
-  String name = "";
-  String designation = "";
+  String? name = "";
+  String? designation = "";
 
   @override
   void initState() {
@@ -191,8 +191,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadUserData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      name = prefs.getString('name') ?? "Guest";
-      designation = prefs.getString('userDesignation') ?? "Not Available";
+      name = prefs.getString('name') ?? " ";
+      designation = prefs.getString('userDesignation') ?? " ";
     });
   }
 
@@ -200,12 +200,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Color(0xFF002D96),
-        statusBarIconBrightness: Brightness.light,
-      ),
-    );
+    // SystemChrome.setSystemUIOverlayStyle(
+    //   const SystemUiOverlayStyle(
+    //     statusBarColor: Colors.transparent,
+    //     statusBarIconBrightness: Brightness.light,
+    //   ),
+    // );
 
     return Scaffold(
       body: Container(
@@ -330,41 +330,44 @@ class _HomeScreenState extends State<HomeScreen> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    "अधिकारी: ",
-                                    style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: size.width * 0.04,
+                              if (name != null && name!.trim().isNotEmpty)
+                                Row(
+                                  children: [
+                                    Text(
+                                      "अधिकारी: ",
+                                      style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: size.width * 0.04,
+                                      ),
                                     ),
-                                  ),
-                                  Text(
-                                    "$name",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: size.width * 0.04,
-                                      // fontWeight: FontWeight.w600,
+                                    Text(
+                                      "$name",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: size.width * 0.04,
+                                        // fontWeight: FontWeight.w600,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  Text(
-                                    "पदनाम : ",
-                                    style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: size.width * 0.035,
+                                  ],
+                                ),
+                              if (designation != null &&
+                                  designation!.trim().isNotEmpty)
+                                Row(
+                                  children: [
+                                    Text(
+                                      "पदनाम : ",
+                                      style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: size.width * 0.035,
+                                      ),
                                     ),
-                                  ),
-                                  Text(
-                                    "$designation",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: size.width * 0.035,
+                                    Text(
+                                      "$designation",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: size.width * 0.035,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
+                                  ],
+                                ),
                             ],
                           ),
                         ],
